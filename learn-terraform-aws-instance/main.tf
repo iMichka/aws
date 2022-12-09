@@ -23,7 +23,7 @@ resource "aws_vpc" "test-env" {
 }
 
 resource "aws_subnet" "instance_subnet" {
-  cidr_block        = "10.0.3.0/24"
+  cidr_block        = "10.0.1.0/24"
   vpc_id            = aws_vpc.test-env.id
   availability_zone = "eu-west-3a"
   tags = {
@@ -69,9 +69,10 @@ resource "aws_instance" "app_server" {
   ami           = "ami-03605ed178c26cfab"
   instance_type = "t2.micro"
 
-  vpc_security_group_ids = ["${aws_security_group.ingress-all-test.id}"]
-
-  subnet_id = aws_subnet.instance_subnet.id
+  network_interface {
+    network_interface_id = aws_network_interface.app_server-eni.id
+    device_index         = 0
+  }
 
   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
 
@@ -81,6 +82,15 @@ resource "aws_instance" "app_server" {
     Name = "ExampleAppServerInstance"
   }
 
+}
+
+resource "aws_network_interface" "app_server-eni" {
+  subnet_id       = aws_subnet.instance_subnet.id
+  security_groups = [aws_security_group.ingress-all-test.id]
+
+  tags = {
+    Name = "primary_network_interface"
+  }
 }
 
 ######################
@@ -168,10 +178,6 @@ resource "aws_nat_gateway" "nat_gateway" {
   tags = {
     "Name" = "DummyNatGateway"
   }
-}
-
-output "nat_gateway_ip" {
-  value = aws_eip.nat_gateway.public_ip
 }
 
 resource "aws_route_table" "instance_subnet" {
