@@ -22,12 +22,12 @@ resource "aws_vpc" "test-env" {
   }
 }
 
-resource "aws_subnet" "subnet-uno" {
-  cidr_block        = cidrsubnet(aws_vpc.test-env.cidr_block, 3, 1)
+resource "aws_subnet" "instance_subnet" {
+  cidr_block        = "10.0.3.0/24"
   vpc_id            = aws_vpc.test-env.id
   availability_zone = "eu-west-3a"
   tags = {
-    Name = "subnet-uno"
+    Name = "instance_subnet"
   }
 }
 
@@ -71,7 +71,7 @@ resource "aws_instance" "app_server" {
 
   vpc_security_group_ids = ["${aws_security_group.ingress-all-test.id}"]
 
-  subnet_id = aws_subnet.subnet-uno.id
+  subnet_id = aws_subnet.instance_subnet.id
 
   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
 
@@ -126,32 +126,63 @@ resource "aws_ssm_activation" "foo" {
   depends_on         = [aws_iam_role_policy_attachment.SSM-role-policy-attach]
 }
 
-//gateways.tf
-resource "aws_internet_gateway" "test-env-gw" {
-  vpc_id = aws_vpc.test-env.id
+// ----
+
+resource "aws_subnet" "nat_gateway_subnet" {
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "eu-west-3a"
+  vpc_id            = aws_vpc.test-env.id
   tags = {
-    Name = "test-env-gw"
+    "Name" = "DummySubnetNAT"
   }
 }
 
-resource "aws_eip" "ip-test-env" {
-  instance = aws_instance.app_server.id
-  vpc      = true
+resource "aws_internet_gateway" "nat_gateway" {
+  vpc_id = aws_vpc.test-env.id
+  tags = {
+    "Name" = "DummyGateway"
+  }
 }
 
-//subnets.tf
-resource "aws_route_table" "route-table-test-env" {
+resource "aws_route_table" "nat_gateway" {
   vpc_id = aws_vpc.test-env.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.test-env-gw.id
-  }
-  tags = {
-    Name = "test-env-route-table"
+    gateway_id = aws_internet_gateway.nat_gateway.id
   }
 }
 
-resource "aws_route_table_association" "subnet-association" {
-  subnet_id      = aws_subnet.subnet-uno.id
-  route_table_id = aws_route_table.route-table-test-env.id
+resource "aws_route_table_association" "nat_gateway" {
+  subnet_id      = aws_subnet.nat_gateway_subnet.id
+  route_table_id = aws_route_table.nat_gateway.id
+}
+
+
+resource "aws_eip" "nat_gateway" {
+  vpc = true
+}
+
+resource "aws_nat_gateway" "nat_gateway" {
+  allocation_id = aws_eip.nat_gateway.id
+  subnet_id     = aws_subnet.nat_gateway_subnet.id
+  tags = {
+    "Name" = "DummyNatGateway"
+  }
+}
+
+output "nat_gateway_ip" {
+  value = aws_eip.nat_gateway.public_ip
+}
+
+resource "aws_route_table" "instance_subnet" {
+  vpc_id = aws_vpc.test-env.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gateway.id
+  }
+}
+
+resource "aws_route_table_association" "instance_subnet" {
+  subnet_id      = aws_subnet.instance_subnet.id
+  route_table_id = aws_route_table.instance_subnet.id
 }
