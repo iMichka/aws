@@ -50,12 +50,6 @@ resource "aws_security_group" "ingress-all-test" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
   #all outbound
   egress {
     from_port   = 0
@@ -76,7 +70,15 @@ resource "aws_instance" "app_server" {
 
   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
 
-  user_data = templatefile("ssm-agent-installer.sh", {})
+  user_data = <<EOF
+#!/bin/bash
+sudo mkdir /tmp/ssm
+cd /tmp/ssm
+wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+sudo dpkg -i amazon-ssm-agent.deb
+sudo systemctl enable amazon-ssm-agent
+rm amazon-ssm-agent.deb
+  EOF
 
   tags = {
     Name = "ExampleAppServerInstance"
@@ -108,7 +110,7 @@ resource "aws_iam_role" "ssm_role" {
         {
             "Action": "sts:AssumeRole",
             "Principal": {
-               "Service": "ec2.amazonaws.com"
+               "Service": ["ec2.amazonaws.com", "ssm.amazonaws.com"]
             },
             "Effect": "Allow",
             "Sid": ""
@@ -119,7 +121,7 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "SSM-role-policy-attach" {
-  role       = aws_iam_role.ssm_role.id
+  role       = aws_iam_role.ssm_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
@@ -168,27 +170,27 @@ resource "aws_route_table_association" "nat_gateway" {
 }
 
 
-resource "aws_eip" "nat_gateway" {
-  vpc = true
-}
+#resource "aws_eip" "nat_gateway" {
+#  vpc = true
+#}
 
-resource "aws_nat_gateway" "nat_gateway" {
-  allocation_id = aws_eip.nat_gateway.id
-  subnet_id     = aws_subnet.nat_gateway_subnet.id
-  tags = {
-    "Name" = "DummyNatGateway"
-  }
-}
+#resource "aws_nat_gateway" "nat_gateway" {
+#  allocation_id = aws_eip.nat_gateway.id
+#  subnet_id     = aws_subnet.nat_gateway_subnet.id
+#  tags = {
+#    "Name" = "DummyNatGateway"
+#  }
+#}
 
-resource "aws_route_table" "instance_subnet" {
-  vpc_id = aws_vpc.test-env.id
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat_gateway.id
-  }
-}
+#resource "aws_route_table" "instance_subnet" {
+#  vpc_id = aws_vpc.test-env.id
+#  route {
+#    cidr_block     = "0.0.0.0/0"
+#    nat_gateway_id = aws_nat_gateway.nat_gateway.id
+#  }
+#}
 
-resource "aws_route_table_association" "instance_subnet" {
-  subnet_id      = aws_subnet.instance_subnet.id
-  route_table_id = aws_route_table.instance_subnet.id
-}
+#resource "aws_route_table_association" "instance_subnet" {
+#  subnet_id      = aws_subnet.instance_subnet.id
+#  route_table_id = aws_route_table.instance_subnet.id
+#}
