@@ -22,6 +22,8 @@ jobs:
     name: Terraform
     environment: prd
     steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
