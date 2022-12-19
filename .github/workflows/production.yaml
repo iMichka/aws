@@ -78,11 +78,9 @@ jobs:
             const output = `### ${{ inputs.plan-title }} Part # ${i + 1}
             #### Terraform Initialization \`${{ steps.init.outcome }}\`
             #### Terraform Plan \`${{ steps.plan.outcome }}\`
-            <details><summary>Show Plan</summary>
             \`\`\`
             ${plans[i]}
             \`\`\`
-            </details>
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
             await github.rest.issues.createComment({
