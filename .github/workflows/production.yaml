@@ -5,12 +5,12 @@ on:
     branches:
     - main
     paths: 
-    - production/**
+    - prd/**
   pull_request:
     branches:
     - main
     paths: 
-    - production/**
+    - prd/**
 
 permissions:
   contents: read
