@@ -173,8 +173,6 @@ resource "aws_ssm_activation" "foo" {
   depends_on         = [aws_iam_role_policy_attachment.SSM-role-policy-attach]
 }
 
-// ----
-
 resource "aws_subnet" "nat_gateway_subnet" {
   cidr_block        = "10.0.2.0/24"
   availability_zone = "eu-west-3a"
