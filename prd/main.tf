@@ -11,58 +11,11 @@ terraform {
 
 provider "aws" {
   region = "eu-west-3"
-}
 
-resource "aws_s3_bucket" "imichka-terraform-state" {
-  bucket = "imichka-terraform-state"
-}
-
-resource "aws_s3_bucket_versioning" "terraform_state_bucket_versioning" {
-  bucket = aws_s3_bucket.imichka-terraform-state.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_dynamodb_table" "dynamodb_terraform_state_lock" {
-  name           = "dynamodb_terraform_state_lock"
-  hash_key       = "LockID"
-  read_capacity  = 20
-  write_capacity = 20
-  tags = {
-    Name = "DynamoDB Terraform State Lock Table"
-  }
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-}
-
-terraform {
-  backend "s3" {
-    encrypt        = true
-    bucket         = "imichka-terraform-state"
-    key            = "tfstate-s3-bucket"
-    region         = "eu-west-3"
-    dynamodb_table = "dynamodb_terraform_state_lock"
-  }
-}
-
-resource "aws_vpc" "test-env" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  tags = {
-    Name = "test-env"
-  }
-}
-
-resource "aws_subnet" "instance_subnet" {
-  cidr_block        = "10.0.1.0/24"
-  vpc_id            = aws_vpc.test-env.id
-  availability_zone = "eu-west-3a"
-  tags = {
-    Name = "instance_subnet"
+  default_tags {
+    tags = {
+      Env = var.tag_prd
+    }
   }
 }
 
@@ -171,15 +124,6 @@ resource "aws_ssm_activation" "foo" {
   iam_role           = aws_iam_role.ssm_role.id
   registration_limit = "5"
   depends_on         = [aws_iam_role_policy_attachment.SSM-role-policy-attach]
-}
-
-resource "aws_subnet" "nat_gateway_subnet" {
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-west-3a"
-  vpc_id            = aws_vpc.test-env.id
-  tags = {
-    "Name" = "DummySubnetNAT"
-  }
 }
 
 resource "aws_internet_gateway" "nat_gateway" {
