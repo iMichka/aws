@@ -11,6 +11,10 @@ terraform {
 
 provider "aws" {
   region = "eu-west-3"
+
+  tags = {
+    Env = var.tag_prd
+  }
 }
 
 resource "aws_s3_bucket" "imichka-terraform-state" {
@@ -53,6 +57,7 @@ resource "aws_vpc" "test-env" {
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
+    Env  = var.tag_prd
     Name = "test-env"
   }
 }
@@ -62,6 +67,7 @@ resource "aws_subnet" "instance_subnet" {
   vpc_id            = aws_vpc.test-env.id
   availability_zone = "eu-west-3a"
   tags = {
+    Env  = var.tag_prd
     Name = "instance_subnet"
   }
 }
