@@ -12,8 +12,10 @@ terraform {
 provider "aws" {
   region = "eu-west-3"
 
-  tags = {
-    Env = var.tag_prd
+  default_tags {
+    tags = {
+      Env = var.tag_prd
+    }
   }
 }
 
