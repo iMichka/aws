@@ -5,12 +5,12 @@ on:
     branches:
     - main
     paths: 
-    - production/**
+    - prd/**
   pull_request:
     branches:
     - main
     paths: 
-    - production/**
+    - prd/**
 
 permissions:
   contents: read
@@ -22,6 +22,8 @@ jobs:
     name: Terraform
     environment: prd
     steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
@@ -31,31 +33,31 @@ jobs:
       id: init
       run: terraform init
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.CLIENT_ID }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      working-directory: ./prd
+      working-directory: prd
       shell: bash
     - name: Terraform Plan
       id: plan
       run: |
         terraform plan -input=false -no-color -out tf.plan
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.CLIENT_ID }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      working-directory: ./prd
+      working-directory: prd
       shell: bash
     - name: Terraform Show
       id: show
       run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
-      working-directory: ./prd
+      working-directory: prd
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.CLIENT_ID }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       shell: bash
     - uses: actions/github-script@v6
       if: github.event_name == 'pull_request'
       with:
-        github-token: ${{ inputs.GITHUB_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require("fs");
           const plan = fs.readFileSync("/tmp/plan.txt", "utf8");
@@ -74,15 +76,12 @@ jobs:
           var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
           for (let i = 0; i < plans.length; i++) {
             const output = `### ${{ inputs.plan-title }} Part # ${i + 1}
-            #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            <details><summary>Show Plan</summary>
-            \`\`\`\n
+            #### Terraform Initialization \`${{ steps.init.outcome }}\`
+            #### Terraform Plan \`${{ steps.plan.outcome }}\`
+            \`\`\`
             ${plans[i]}
             \`\`\`
-            </details>
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ inputs.working-directory }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,

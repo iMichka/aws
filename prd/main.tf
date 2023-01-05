@@ -94,45 +94,45 @@ resource "aws_security_group" "ingress-all-test" {
   }
 }
 
-resource "aws_instance" "app_server" {
-  ami           = "ami-03605ed178c26cfab"
-  instance_type = "t2.micro"
+# resource "aws_instance" "app_server" {
+#   ami           = "ami-03605ed178c26cfab"
+#   instance_type = "t2.micro"
 
-  network_interface {
-    network_interface_id = aws_network_interface.app_server-eni.id
-    device_index         = 0
-  }
+#   network_interface {
+#     network_interface_id = aws_network_interface.app_server-eni.id
+#     device_index         = 0
+#   }
 
-  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+#   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
 
-  user_data = <<EOF
-#!/bin/bash
-sudo mkdir /tmp/ssm
-cd /tmp/ssm
-wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
-sudo dpkg -i amazon-ssm-agent.deb
-sudo systemctl enable amazon-ssm-agent
-rm amazon-ssm-agent.deb
-  EOF
+#   user_data = <<EOF
+# #!/bin/bash
+# sudo mkdir /tmp/ssm
+# cd /tmp/ssm
+# wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+# sudo dpkg -i amazon-ssm-agent.deb
+# sudo systemctl enable amazon-ssm-agent
+# rm amazon-ssm-agent.deb
+#   EOF
 
-  tags = {
-    Name = "ExampleAppServerInstance"
-  }
+#   tags = {
+#     Name = "ExampleAppServerInstance"
+#   }
 
-}
+# }
 
-resource "aws_network_interface" "app_server-eni" {
-  subnet_id       = aws_subnet.instance_subnet.id
-  security_groups = [aws_security_group.ingress-all-test.id]
+# resource "aws_network_interface" "app_server-eni" {
+#   subnet_id       = aws_subnet.instance_subnet.id
+#   security_groups = [aws_security_group.ingress-all-test.id]
 
-  tags = {
-    Name = "primary_network_interface"
-  }
-}
+#   tags = {
+#     Name = "primary_network_interface"
+#   }
+# }
 
-######################
-# EC2 Instance Role #
-######################
+# ######################
+# # EC2 Instance Role #
+# ######################
 
 resource "aws_iam_role" "ssm_role" {
   name = "ssm_role"
@@ -172,8 +172,6 @@ resource "aws_ssm_activation" "foo" {
   registration_limit = "5"
   depends_on         = [aws_iam_role_policy_attachment.SSM-role-policy-attach]
 }
-
-// ----
 
 resource "aws_subnet" "nat_gateway_subnet" {
   cidr_block        = "10.0.2.0/24"
