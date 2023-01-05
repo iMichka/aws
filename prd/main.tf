@@ -17,26 +17,6 @@ provider "aws" {
   }
 }
 
-resource "aws_vpc" "test-env" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  tags = {
-    Env  = var.tag_prd
-    Name = "test-env"
-  }
-}
-
-resource "aws_subnet" "instance_subnet" {
-  cidr_block        = "10.0.1.0/24"
-  vpc_id            = aws_vpc.test-env.id
-  availability_zone = "eu-west-3a"
-  tags = {
-    Env  = var.tag_prd
-    Name = "instance_subnet"
-  }
-}
-
 //security.tf
 resource "aws_security_group" "ingress-all-test" {
   name   = "allow-all-sg"
@@ -142,15 +122,6 @@ resource "aws_ssm_activation" "foo" {
   iam_role           = aws_iam_role.ssm_role.id
   registration_limit = "5"
   depends_on         = [aws_iam_role_policy_attachment.SSM-role-policy-attach]
-}
-
-resource "aws_subnet" "nat_gateway_subnet" {
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-west-3a"
-  vpc_id            = aws_vpc.test-env.id
-  tags = {
-    "Name" = "DummySubnetNAT"
-  }
 }
 
 resource "aws_internet_gateway" "nat_gateway" {
