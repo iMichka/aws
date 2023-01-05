@@ -12,6 +12,6 @@ resource "aws_subnet" "nat_gateway_subnet" {
   availability_zone = "eu-west-3a"
   vpc_id            = aws_vpc.test-env.id
   tags = {
-    "Name" = "DummySubnetNAT"
+    Name = "DummySubnetNAT"
   }
 }
