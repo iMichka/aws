@@ -54,6 +54,16 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       shell: bash
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      id: apply
+      run: |
+        terraform apply -auto-approve
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      working-directory: prd
+      shell: bash
     - uses: actions/github-script@v6
       if: github.event_name == 'pull_request'
       with:
