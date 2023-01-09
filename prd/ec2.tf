@@ -26,7 +26,7 @@
 # }
 
 # resource "aws_network_interface" "app_server-eni" {
-#   subnet_id       = aws_subnet.instance_subnet.id
+#   subnet_id       = aws_subnet.private.id
 #   security_groups = [aws_security_group.ingress-all-test.id]
 
 #   tags = {
@@ -36,5 +36,5 @@
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
   name = "ssm_role-ec2-role"
-  role = aws_iam_role.ssm_role.id
+  role = aws_iam_role.ssm-role.id
 }
