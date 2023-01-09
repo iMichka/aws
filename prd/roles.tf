@@ -1,5 +1,5 @@
-resource "aws_iam_role" "ssm_role" {
-  name = "ssm_role"
+resource "aws_iam_role" "ssm-role" {
+  name = "ssm-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -20,6 +20,6 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "SSM-role-policy-attach" {
-  role       = aws_iam_role.ssm_role.name
+  role       = aws_iam_role.ssm-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }

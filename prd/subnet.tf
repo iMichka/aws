@@ -1,17 +1,17 @@
-resource "aws_subnet" "instance_subnet" {
+resource "aws_subnet" "private" {
   cidr_block        = "10.0.1.0/24"
-  vpc_id            = aws_vpc.test-env.id
+  vpc_id            = aws_vpc.main.id
   availability_zone = "eu-west-3a"
   tags = {
-    Name = "instance_subnet"
+    Name = "subnet-private-1"
   }
 }
 
-resource "aws_subnet" "nat_gateway_subnet" {
+resource "aws_subnet" "public" {
   cidr_block        = "10.0.2.0/24"
   availability_zone = "eu-west-3a"
-  vpc_id            = aws_vpc.test-env.id
+  vpc_id            = aws_vpc.main.id
   tags = {
-    Name = "DummySubnetNAT"
+    Name = "subnet-public-1"
   }
 }
