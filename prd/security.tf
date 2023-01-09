@@ -1,5 +1,5 @@
-resource "aws_security_group" "ingress-all-test" {
-  name   = "allow-all-sg"
+resource "aws_security_group" "main-security-group" {
+  name   = "main-security-group"
   vpc_id = aws_vpc.main.id
 
   # Allow http 

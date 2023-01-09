@@ -3,3 +3,9 @@ variable "tag_prd" {
   default     = "prd"
   description = "Production tag"
 }
+
+variable "region" {
+  type        = string
+  default     = "eu-west-3"
+  description = "AWS region"
+}
