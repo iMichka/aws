@@ -1,25 +1,33 @@
-resource "aws_route_table" "nat_gateway" {
+resource "aws_route_table" "public-route-table" {
   vpc_id = aws_vpc.main.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.nat_gateway.id
+    gateway_id = aws_internet_gateway.main-internet-gateway.id
+  }
+
+  tags = {
+    Name = "public-route-table"
   }
 }
 
-resource "aws_route_table_association" "nat_gateway" {
+resource "aws_route_table_association" "public-route-table-association" {
   subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.nat_gateway.id
+  route_table_id = aws_route_table.public-route-table.id
 }
 
-#resource "aws_route_table" "private" {
+#resource "aws_route_table" "private-route-table" {
 #  vpc_id = aws_vpc.main.id
 #  route {
 #    cidr_block     = "0.0.0.0/0"
 #    nat_gateway_id = aws_nat_gateway.nat_gateway.id
 #  }
+
+#   tags = {
+#     Name = "private-route-table"
+#   }
 #}
 
-#resource "aws_route_table_association" "private" {
+#resource "aws_route_table_association" "private-route-table-association" {
 #  subnet_id      = aws_subnet.private.id
-#  route_table_id = aws_route_table.private.id
+#  route_table_id = aws_route_table.private-route-table.id
 #}
