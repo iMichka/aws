@@ -1,3 +1,3 @@
-#resource "aws_eip" "nat_gateway" {
-#  vpc = true
-#}
+# resource "aws_eip" "main-eip" {
+#   vpc = true
+# }
