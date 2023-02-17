@@ -33,3 +33,22 @@ resource "aws_subnet" "public-mastodon" {
     Name = "subnet-public-4"
   }
 }
+
+resource "aws_subnet" "private-mastodon-db-a" {
+  cidr_block        = "10.0.5.0/24"
+  vpc_id            = aws_vpc.main.id
+  availability_zone = "${var.region}a"
+  tags = {
+    Name = "subnet-private-db-5"
+  }
+}
+
+resource "aws_subnet" "private-mastodon-db-b" {
+  cidr_block        = "10.0.6.0/24"
+  vpc_id            = aws_vpc.main.id
+  availability_zone = "${var.region}b"
+  tags = {
+    Name = "subnet-private-db-6"
+  }
+}
+
