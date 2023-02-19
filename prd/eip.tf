@@ -1,3 +1,3 @@
-# resource "aws_eip" "main-eip" {
-#   vpc = true
-# }
+resource "aws_eip" "mastodon-public-eip" {
+  vpc = true
+}
