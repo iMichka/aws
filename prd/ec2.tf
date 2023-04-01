@@ -17,6 +17,9 @@ wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64
 sudo dpkg -i amazon-ssm-agent.deb
 sudo systemctl enable amazon-ssm-agent
 rm amazon-ssm-agent.deb
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt update
+sudo apt install -y ansible awscli
   EOF
 
   tags = {
