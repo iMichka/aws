@@ -43,7 +43,7 @@ resource "aws_network_interface" "nat-instance-eni" {
 
 resource "aws_iam_instance_profile" "nat-instance-profile" {
   name = "nat-instance-profile"
-  role = aws_iam_role.ssm-role.id
+  role = aws_iam_role.ec2-role.id
 }
 
 resource "aws_eip_association" "nat-instace-eip-association" {

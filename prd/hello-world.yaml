@@ -1,5 +1,6 @@
 - name: Install Apache webserver for target
   hosts: all
+  become: yes
  
   tasks:
     - name: Install apache httpd

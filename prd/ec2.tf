@@ -39,5 +39,5 @@ resource "aws_network_interface" "mastodon-instance-eni" {
 
 resource "aws_iam_instance_profile" "mastodon-instance-profile" {
   name = "mastodon-instance-profile"
-  role = aws_iam_role.ssm-role.id
+  role = aws_iam_role.ec2-role.id
 }
