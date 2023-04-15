@@ -8,7 +8,7 @@ COMMAND_ID=$( \
 						 --output-s3-key-prefix output \
 						 --output-s3-region eu-west-3 \
 						 --targets "Key=instanceids,Values=$INSTANCE_ID"\
-						 --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\" : \"iMichka\", \"repository\":\"aws\", \"getOptions\":\"branch:main\", \"path\":\"prd/hello-world.yaml\"}"], "commandLine":["ansible-playbook -i “localhost,” --check -c local hello-world.yaml"]}'\
+						 --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\" : \"iMichka\", \"repository\":\"aws\", \"getOptions\":\"branch:main\", \"path\":\"prd/ansible-mastodon-instance/hello-world.yaml\"}"], "commandLine":["ansible-playbook -i “localhost,” --check -c local hello-world.yaml"]}'\
 						 --timeout-seconds 600 --max-concurrency "50" --max-errors "0" --output text --query "Command.CommandId")
 
 echo $COMMAND_ID
