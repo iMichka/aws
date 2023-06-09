@@ -23,6 +23,12 @@
                   proxy_pass http://10.0.3.178:80;
               }
           }
+          server {
+              listen 443;
+              location / {
+                  proxy_pass http://10.0.3.178:443;
+              }
+          }
 
     - name: Link NGINX Reverse Proxy
       file:
