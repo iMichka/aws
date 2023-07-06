@@ -1,15 +1,10 @@
 resource "aws_instance" "mastodon-instance" {
   ami           = "ami-03605ed178c26cfab"
-  instance_type = "t2.small"
+  instance_type = "t2.micro"
 
   network_interface {
     network_interface_id = aws_network_interface.mastodon-instance-eni.id
     device_index         = 0
-  }
-
-  root_block_device {
-    volume_size = 20
-    volume_type = "gp3"
   }
 
   iam_instance_profile = aws_iam_instance_profile.mastodon-instance-profile.name
