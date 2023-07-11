@@ -7,26 +7,31 @@
       ansible.builtin.apt:
         name:
           - curl
-          - wget
           - gnupg
-          - apt-transport-https
-          - lsb-release
-          - ca-certificates
-          - acl # for ansible https://www.buggycoder.com/ansible-error-failed-to-set-permissions/
-        state: present
- 
-    - name: Install node
-      shell: |
-        curl -sL https://deb.nodesource.com/setup_16.x | bash -
 
-    - name: Install postgresql
-      shell: |
-        wget -O /usr/share/keyrings/postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
-        echo "deb [signed-by=/usr/share/keyrings/postgresql.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/postgresql.list
+    - name: Add postgresql apt key
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+
+    - name: Add nodejs apt key
+      apt_key:
+        url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+        state: present
+
+    - name: Add nodejs 16.x ppa for apt repo
+      apt_repository:
+        repo: deb https://deb.nodesource.com/node_16.x bullseye main
+        update_cache: yes
 
     - name: Install packages
       ansible.builtin.apt:
         name:
+          - apt-transport-https
+          - lsb-release
+          - ca-certificates
+          - acl # for ansible https://www.buggycoder.com/ansible-error-failed-to-set-permissions/
+          - nodejs # Apt key added above
           - imagemagick
           - ffmpeg
           - libpq-dev
@@ -53,7 +58,7 @@
           - nginx
           - redis-server
           - redis-tools
-          - postgresql
+          - postgresql # Apt key added above
           - postgresql-contrib
           - certbot
           - python3-certbot-nginx
@@ -62,7 +67,9 @@
           - libjemalloc-dev
           - acl
           - python3-psycopg2 # for community.postgresql.postgresql_user
+          - python3-boto3 # For the aws_s3 step
         state: present
+        update_cache: yes
 
     - name: Yarn  
       shell: |
@@ -87,14 +94,20 @@
       ansible.builtin.lineinfile:
         path: "/home/mastodon/.bashrc"
         state: present
-        line: "export PATH='$HOME/.rbenv/bin:$PATH'"
+        line: "export PATH=$HOME/.rbenv/bin:$PATH"
       become_user: mastodon
      
     - name: rbenv init
       ansible.builtin.lineinfile:
         path: "/home/mastodon/.bashrc"
         state: present
-        line: "eval '$(rbenv init -)'"
+        line: "eval \"$(rbenv init -)\""
+      become_user: mastodon
+
+    - name: Get ruby-build plugin (for rbenv install command)
+      ansible.builtin.git:
+        repo: "https://github.com/rbenv/ruby-build.git"
+        dest: "/home/mastodon/.rbenv/plugins/ruby-build"
       become_user: mastodon
 
     - name: Install ruby
@@ -139,32 +152,211 @@
         version: v4.1.2
       become_user: mastodon
 
+    - name: Get config file from s3
+      aws_s3:
+        bucket: imichka-ansible
+        object: env/.env.production
+        dest: /home/mastodon/live/.env.production
+        mode: get
+
     - name: Install Mastodon ruby deps
       shell: |
         cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.0.6/bin/bundle config deployment 'true'
         cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.0.6/bin/bundle config without 'development test'
         cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.0.6/bin/bundle install -j$(getconf _NPROCESSORS_ONLN)
       become_user: mastodon
-      
+
     - name: Install more deps
       shell: cd /home/mastodon/live && yarn install --pure-lockfile
 
-    - name: Install more deps
-      shell: cp /home/mastodon/live/.env.production.sample /home/mastodon/live/.env.production
-      become_user: mastodon
-
-    - name: Install Mastodon
+    - name: Setup database
       shell: |
-        # cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.0.6/bin/bundle exec rake mastodon:setup --verbose --trace
-
-        /etc/postgresql/15/main/pg_hba.conf
-        peer -> scram-sha-256
-
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.0.6/bin/bundle exec rake secret
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.0.6/bin/bundle exec rake db:setup
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.0.6/bin/bundle exec rake assets:precompile --verbose --trace
-      become_user: mastodon  
-
-    - name: Install nginx conf
-      shell: cp /home/mastodon/live/dist/nginx.conf /etc/nginx/sites-available/mastodon
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.0.6/bin/bundle exec rake db:prepare --verbose
       become_user: mastodon
+
+    - name: Install assets
+      shell: |
+        export NODE_OPTIONS="--max-old-space-size=2048"
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.0.6/bin/bundle exec rake assets:precompile --trace --verbose
+      become_user: mastodon
+
+    - name: Create NGINX Conf File
+      copy:
+        dest: /etc/nginx/sites-available/mastodon.conf
+        content: |
+          map $http_upgrade $connection_upgrade {
+            default upgrade;
+            ''      close;
+          }
+
+          upstream backend {
+              server 127.0.0.1:3000 fail_timeout=0;
+          }
+
+          upstream streaming {
+              server 127.0.0.1:4000 fail_timeout=0;
+          }
+
+          proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=CACHE:10m inactive=7d max_size=1g;
+
+          server {
+            listen 80;
+            listen [::]:80;
+            server_name mastodon.imichka.me;
+
+            keepalive_timeout    70;
+            sendfile             on;
+            client_max_body_size 80m;
+
+            root /home/mastodon/live/public;
+
+            gzip on;
+            gzip_disable "msie6";
+            gzip_vary on;
+            gzip_proxied any;
+            gzip_comp_level 6;
+            gzip_buffers 16 8k;
+            gzip_http_version 1.1;
+            gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml image/x-icon;
+
+            location / {
+              try_files $uri @proxy;
+            }
+
+            # If Docker is used for deployment and Rails serves static files,
+            # then needed must replace line `try_files $uri =404;` with `try_files $uri @proxy;`.
+            location = /sw.js {
+              add_header Cache-Control "public, max-age=604800, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/assets/ {
+              add_header Cache-Control "public, max-age=2419200, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/avatars/ {
+              add_header Cache-Control "public, max-age=2419200, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/emoji/ {
+              add_header Cache-Control "public, max-age=2419200, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/headers/ {
+              add_header Cache-Control "public, max-age=2419200, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/packs/ {
+              add_header Cache-Control "public, max-age=2419200, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/shortcuts/ {
+              add_header Cache-Control "public, max-age=2419200, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/sounds/ {
+              add_header Cache-Control "public, max-age=2419200, must-revalidate";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ~ ^/system/ {
+              add_header Cache-Control "public, max-age=2419200, immutable";
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+              try_files $uri =404;
+            }
+
+            location ^~ /api/v1/streaming {
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header Proxy "";
+
+              proxy_pass http://streaming;
+              proxy_buffering off;
+              proxy_redirect off;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection $connection_upgrade;
+
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+
+              tcp_nodelay on;
+            }
+
+            location @proxy {
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              # proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Proto https; # the lie is right here
+              proxy_set_header Proxy "";
+              proxy_pass_header Server;
+
+              proxy_pass http://backend;
+              proxy_buffering on;
+              proxy_redirect off;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection $connection_upgrade;
+
+              proxy_cache CACHE;
+              proxy_cache_valid 200 7d;
+              proxy_cache_valid 410 24h;
+              proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+              add_header X-Cached $upstream_cache_status;
+
+              tcp_nodelay on;
+            }
+
+            error_page 404 500 501 502 503 504 /500.html;
+          }
+
+    - name: Link NGINX Reverse Proxy
+      file:
+        src: "/etc/nginx/sites-available/mastodon.conf"
+        dest: "/etc/nginx/sites-enabled/mastodon.conf"
+        state: link
+
+    - name: Make Sure NGINX Service Is Running
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+    - name: Copy systemd service
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /etc/systemd/system/
+      loop:
+        - "/home/mastodon/live/dist/mastodon-sidekiq.service"
+        - "/home/mastodon/live/dist/mastodon-streaming.service"
+        - "/home/mastodon/live/dist/mastodon-web.service"
+
+    - name: Force systemd to reread configs
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable maston services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - "mastodon-web"
+        - "mastodon-sidekiq"
+        - "mastodon-streaming"
