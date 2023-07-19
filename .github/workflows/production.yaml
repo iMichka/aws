@@ -117,7 +117,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Replace credentials
         run: |
-          sed -i 's/$RAKE_SECRET/${{ secrets.RAKE_SECRET }}/g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$RAKE_SECRET:${{ secrets.RAKE_SECRET }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$AWS_ACCESS_KEY_ID:${{ secrets.AWS_ACCESS_KEY_ID }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$AWS_SECRET_ACCESS_KEY:${{ secrets.AWS_SECRET_ACCESS_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
       - name: Sync to S3
         run: >
           aws s3 cp ./prd/ansible-mastodon-instance/.env.production s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/
