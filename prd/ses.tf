@@ -32,7 +32,7 @@ output "smtp-username" {
   value = aws_iam_access_key.smtp-user.id
 }
 
-output "smtp_password" {
+output "smtp-password" {
   value     = aws_iam_access_key.smtp-user.ses_smtp_password_v4
   sensitive = true
 }
