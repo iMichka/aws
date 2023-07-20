@@ -19,3 +19,7 @@ sudo certbot --nginx -m <email> --agree-tos --no-eff-email -d mastodon.imichka.m
 ## Reverse proxy https / http tricks
 
 https://blog.vyvojari.dev/mastodon-behind-a-reverse-proxy-without-ssl-https/
+
+## Emails / SES / SMTP
+
+https://stackoverflow.com/questions/52850212/terraform-aws-ses-credential-resource
