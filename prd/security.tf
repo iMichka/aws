@@ -16,11 +16,19 @@ resource "aws_security_group" "main-security-group" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  # Allow ping
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 8
     to_port     = 0
     protocol    = "icmp"
+  }
+  # Allow smtp
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 587
+    to_port     = 587
+    protocol    = "tcp"
   }
   # All outbound
   egress {
