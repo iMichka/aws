@@ -159,6 +159,20 @@
         dest: /home/mastodon/live/.env.production
         mode: get
 
+    - name: Get backup file from s3
+      aws_s3:
+        bucket: imichka-ansible
+        object: env/backup.sh
+        dest: /home/mastodon/backup.sh
+        mode: get
+      become_user: mastodon
+
+    - name: Make script executable
+      ansible.builtin.file:
+        path: /home/mastodon/backup.sh
+        mode: u=rwx,g=r,o=r
+      become_user: mastodon
+
     - name: Install Mastodon ruby deps
       shell: |
         cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.0.6/bin/bundle config deployment 'true'

@@ -129,6 +129,13 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-3
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Upload backup script
+        run: >
+          aws s3 cp ./prd/ansible-mastodon-instance/backup.sh s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/
+        env:
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Run ansible for mastodon instance
         run: ./prd/ansible-mastodon-instance/ansible-run.sh
         env:
