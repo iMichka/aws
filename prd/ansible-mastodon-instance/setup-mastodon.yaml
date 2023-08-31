@@ -173,6 +173,13 @@
         mode: u=rwx,g=r,o=r
       become_user: mastodon
 
+    - name: Add backup cron
+      ansible.builtin.cron:
+        name: "mastodon backup"
+        minute: "0"
+        hour: "1"
+        job: "/home/mastodon/backup.sh"
+
     - name: Install Mastodon ruby deps
       shell: |
         cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.0.6/bin/bundle config deployment 'true'
