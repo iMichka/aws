@@ -179,6 +179,9 @@
         minute: "0"
         hour: "1"
         job: "/home/mastodon/backup.sh"
+        user: mastodon
+        cron_file: backupmastodon
+        state: present
 
     - name: Install Mastodon ruby deps
       shell: |
