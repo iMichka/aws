@@ -34,12 +34,16 @@ Though I tried my best to respect some basic cybersecurity principles, but I do 
 - Backups are done with a cron job on the EC2 and copied over to S3
 - Certificates are delivered by Let's Encrypt
 
-## Why did I start this crazy project?
+## Architecture
 
-I became a manager in 2022, after 10 years of being a developer, so I wanted to keep coding (even though I'm also still working a lot on https://github.com/Homebrew/)
-I worked with Azure for 4 years, and wanted to try out AWS (my current company is moving to AWS so this made sense too)
-I wanted to give ansible a try
-I wanted to move out of X/Twitter (because of Elon Musk)
+![Screenshot](docs/mastodon.png)
+
+## Why did I start this silly project?
+
+- I became a manager in 2022, after 10 years of being a developer, so I wanted to keep coding (even though I'm also still working a lot on https://github.com/Homebrew/)
+- I worked with Azure for 4 years, and wanted to try out AWS (my current company is moving to AWS so this made sense too)
+- I wanted to give ansible a try
+- I wanted to move out of X/Twitter (because of Elon Musk)
 
 ## Why hosting my own instace?
 
@@ -47,20 +51,23 @@ Freedom
 
 ## Why self-hosting?
 
-I had some free time to beat at the hotel, while travelling for work beginning of 2023.
+I had some free time while travelling alone for work beginning of 2023 for two weeks.
+
 I considered using a mastodon hosting platform, but that did not sound fun enough.
 
 ## What was the hardest part of the projet?
 
 Configuring the nat instance an the reverse proxy. This took me forever.
+
 Setting up the ansible script for mastodon was also a pain (it's based on the mastodon documentation)
+
 I think all in all, it took me more than 100 hours of work to release into production.
 
 ## Future plans
 
-Add encryption between the mastodon EC2 and the reverse proxy
-Setup a saving plan to reduce costs
-
+- Add encryption between the mastodon EC2 and the reverse proxy
+- Setup a saving plan to reduce costs
+- Serve media through a subdomain and add a nginx cache instead of serving through S3 directly (to reduce costs in case of traffic increase, and make the urls backend agnostic)
 
 ## Running ansible
 
