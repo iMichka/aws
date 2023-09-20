@@ -8,6 +8,8 @@
         name:
           - curl
           - gnupg
+        state: present
+        update_cache: yes
 
     - name: Add postgresql apt key
       apt_key:
