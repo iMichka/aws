@@ -108,6 +108,14 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+      - name: Sync to S3
+        run: |
+          aws s3 cp ./prd/ansible-nat-instance/mastodon.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/
+          aws s3 cp ./prd/ansible-nat-instance/files.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/
+        env:
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Run ansible for nat / reverse proxy instance
         run: ./prd/ansible-nat-instance/ansible-run.sh
         env:
