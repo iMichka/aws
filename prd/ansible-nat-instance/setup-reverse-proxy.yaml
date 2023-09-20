@@ -14,14 +14,14 @@
     - name: Get config file from s3
       aws_s3:
         bucket: imichka-ansible
-        object: env/mastodon.conf
+        object: env/nat-instance/mastodon.conf
         dest: /etc/nginx/sites-available/mastodon.conf
         mode: get
 
     - name: Get config file from s3
       aws_s3:
         bucket: imichka-ansible
-        object: env/files.conf
+        object: env/nat-instance/files.conf
         dest: /etc/nginx/sites-available/files.conf
         mode: get
 
