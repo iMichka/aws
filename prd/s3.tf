@@ -22,6 +22,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "imichka-ansible-s3-configurati
 
     status = "Enabled"
   }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "imichka-mastodon-s3-configuration" {
+  bucket = aws_s3_bucket.imichka-mastodon.id
 
   rule {
     id = "backup-30-days-retention"
