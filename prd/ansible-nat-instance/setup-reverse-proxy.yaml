@@ -5,49 +5,46 @@
   tasks:
     - name: Install latest version of Apache
       ansible.builtin.apt:
-        name: nginx
+        name:
+          - nginx
+          - python3-boto3 # For the aws_s3 step
         state: present
 
-    - name: Create NGINX Conf File
+    - name: Get config file from s3
+      aws_s3:
+        bucket: imichka-ansible
+        object: env/mastodon.conf
+        dest: /etc/nginx/sites-available/mastodon.conf
+        mode: get
+
+    - name: Get config file from s3
+      aws_s3:
+        bucket: imichka-ansible
+        object: env/files.conf
+        dest: /etc/nginx/sites-available/files.conf
+        mode: get
+
+    - name: Link NGINX Reverse Proxy (mastodon subdomain)
       file:
-        path: /etc/nginx/sites-available/proxy.conf
-        state: touch
-
-    - name: Create NGINX Conf File
-      copy:
-        dest: /etc/nginx/sites-available/proxy.conf
-        content: |
-          server {
-            server_name mastodon.imichka.me;
-            listen 80;
-            listen [::]:80;
-            return 301 https://mastodon.imichka.me;
-          }
-
-          server {
-            server_name mastodon.imichka.me;
-
-            listen [::]:443 ssl; # managed by Certbot
-            listen 443 ssl; # managed by Certbot
-            ssl_certificate /etc/letsencrypt/live/mastodon.imichka.me/fullchain.pem; # managed by Certbot
-            ssl_certificate_key /etc/letsencrypt/live/mastodon.imichka.me/privkey.pem; # managed by Certbot
-            include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-            ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-            location / {
-              proxy_pass http://10.0.3.178:80;
-              proxy_set_header Host $host;
-              proxy_set_header X-Forwarded-Proto $scheme;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            }
-          }
-
-    - name: Link NGINX Reverse Proxy
-      file:
-        src: "/etc/nginx/sites-available/proxy.conf"
-        dest: "/etc/nginx/sites-enabled/proxy.conf"
+        src: "/etc/nginx/sites-available/mastodon.conf"
+        dest: "/etc/nginx/sites-enabled/mastodon.conf"
         state: link
+
+    - name: Link NGINX Reverse Proxy (files subdomain)
+      file:
+        src: "/etc/nginx/sites-available/files.conf"
+        dest: "/etc/nginx/sites-enabled/files.conf"
+        state: link
+
+    - name: Remove file 
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/proxy.conf
+        state: absent
+
+    - name: Remove file 
+      ansible.builtin.file:
+        path: /etc/nginx/sites-available/proxy.conf
+        state: absent
 
     - name: Make Sure NGINX Service Is Running
       service:
