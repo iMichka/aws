@@ -9,6 +9,7 @@
           - nginx
           - python3-boto3 # For the aws_s3 step
         state: present
+        update_cache: yes
 
     - name: Get config file from s3
       aws_s3:
@@ -35,16 +36,6 @@
         src: "/etc/nginx/sites-available/files.conf"
         dest: "/etc/nginx/sites-enabled/files.conf"
         state: link
-
-    - name: Remove file 
-      ansible.builtin.file:
-        path: /etc/nginx/sites-enabled/proxy.conf
-        state: absent
-
-    - name: Remove file 
-      ansible.builtin.file:
-        path: /etc/nginx/sites-available/proxy.conf
-        state: absent
 
     - name: Make Sure NGINX Service Is Running
       service:
