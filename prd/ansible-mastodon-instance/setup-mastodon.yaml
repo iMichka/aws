@@ -226,6 +226,12 @@
         dest: "/etc/nginx/sites-enabled/mastodon.conf"
         state: link
 
+    - name: Link NGINX Reverse Proxy
+      file:
+        src: "/etc/nginx/sites-available/files.conf"
+        dest: "/etc/nginx/sites-enabled/files.conf"
+        state: link
+
     - name: Make Sure NGINX Service Is Running
       service:
         name: nginx
