@@ -67,7 +67,6 @@ I think all in all, it took me more than 100 hours of work to release into produ
 
 - Add encryption between the mastodon EC2 and the reverse proxy
 - Setup a saving plan to reduce costs
-- Serve media through a subdomain and add a nginx cache instead of serving through S3 directly (to reduce costs in case of traffic increase, and make the urls backend agnostic)
 
 ## Running ansible
 
@@ -83,7 +82,7 @@ sudo less /var/log/nginx/access.log
 
 Comment out "listen SSL 443" in nginx configuration
 
-sudo certbot --nginx -m <email> --agree-tos --no-eff-email -d mastodon.imichka.me
+sudo certbot --nginx --agree-tos --no-eff-email -d mastodon.imichka.me
 
 ## Reverse proxy https / http tricks
 
@@ -92,3 +91,7 @@ https://blog.vyvojari.dev/mastodon-behind-a-reverse-proxy-without-ssl-https/
 ## Emails / SES / SMTP
 
 https://stackoverflow.com/questions/52850212/terraform-aws-ses-credential-resource
+
+## Nginx reverse proxy for s3 / file caching
+
+https://docs.joinmastodon.org/admin/optional/object-storage-proxy/
