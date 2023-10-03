@@ -198,7 +198,7 @@
     # https://blog.saeloun.com/2019/04/11/rails-6-rails-db-prepare/
     - name: Setup database
       shell: |
-        cd /home/mastodon/live && SKIP_POST_DEPLOYMENT_MIGRATIONS=true RAILS_ENV=production /home/mastodon/.rbenv/versions/3.2.2/bin/bundle exec rake db:prepare
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.2.2/bin/bundle exec rake db:prepare
       become_user: mastodon
 
     - name: Install assets
@@ -261,8 +261,3 @@
         - "mastodon-web"
         - "mastodon-sidekiq"
         - "mastodon-streaming"
-
-    - name: Post deployment setup database
-      shell: |
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.2.2/bin/bundle exec rake db:prepare
-      become_user: mastodon
