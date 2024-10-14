@@ -131,6 +131,9 @@ jobs:
           sed -i 's:$AWS_SMTP_USERNAME:${{ secrets.AWS_SMTP_USERNAME }}:g' ./prd/ansible-mastodon-instance/.env.production
           sed -i 's:$AWS_SMTP_KEY:${{ secrets.AWS_SMTP_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
           sed -i 's:$NOTIFICATION_EMAIL:${{ secrets.NOTIFICATION_EMAIL }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY:${{ secrets.ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT:${{ secrets.ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY:${{ secrets.ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
       - name: Sync to S3
         run: |
           aws s3 cp ./prd/ansible-mastodon-instance/.env.production s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/
