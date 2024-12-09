@@ -144,7 +144,7 @@
       ansible.builtin.git:
         repo: "https://github.com/mastodon/mastodon.git"
         dest: "/home/mastodon/live"
-        version: v4.3.1
+        version: v4.3.2
       become_user: mastodon
 
     - name: Corepack
@@ -195,10 +195,10 @@
       shell: cd /home/mastodon/live && yarn install --immutable
 
     # https://blog.saeloun.com/2019/04/11/rails-6-rails-db-prepare/
-    # TODO: SKIP_POST_DEPLOYMENT_MIGRATIONS=true remove after 4.3.0 update
+    # TODO: Set SKIP_POST_DEPLOYMENT_MIGRATIONS=true for some updates
     - name: Setup database
       shell: |
-        cd /home/mastodon/live && RAILS_ENV=production SKIP_POST_DEPLOYMENT_MIGRATIONS=true /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
       become_user: mastodon
 
     - name: Install assets
@@ -261,9 +261,3 @@
         - "mastodon-web"
         - "mastodon-sidekiq"
         - "mastodon-streaming"
-
-    # Run final migration (to be removed)
-    - name: Setup database
-      shell: |
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
-      become_user: mastodon
