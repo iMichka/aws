@@ -144,7 +144,7 @@
       ansible.builtin.git:
         repo: "https://github.com/mastodon/mastodon.git"
         dest: "/home/mastodon/live"
-        version: v4.3.2
+        version: v4.3.3
       become_user: mastodon
 
     - name: Corepack
