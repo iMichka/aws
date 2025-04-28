@@ -17,9 +17,14 @@ wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64
 sudo dpkg -i amazon-ssm-agent.deb
 sudo systemctl enable amazon-ssm-agent
 rm amazon-ssm-agent.deb
+
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt update
+sudo apt install -y ansible awscli
+
 sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -p
-sudo apt-get update
+
 sudo DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent
 sudo /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 sudo service iptables save
