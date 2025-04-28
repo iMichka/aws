@@ -1,5 +1,5 @@
 resource "aws_instance" "nat-instance" {
-  ami           = "ami-03605ed178c26cfab"
+  ami           = "ami-073ef04c366723b30"
   instance_type = "t2.nano"
 
   network_interface {
