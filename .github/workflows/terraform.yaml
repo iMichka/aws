@@ -1,16 +1,8 @@
-name: 'Production'
+name: 'CD Terraform'
 
 on:
-  push:
-    branches:
-    - main
-    paths: 
-    - prd/**
   pull_request:
-    branches:
-    - main
-    paths: 
-    - prd/**
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,7 +14,18 @@ jobs:
     name: Terraform
     environment: prd
     steps:
+    - name: Fail if branch is not main
+      if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+      run: |
+        echo "This workflow should not be triggered with workflow_dispatch on a branch other than main"
+        exit 1
     - name: Checkout repo
+      if: github.event_name != 'pull_request'
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Checkout repo
+      if: github.event_name == 'pull_request'
       uses: actions/checkout@v3
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
@@ -55,7 +58,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       shell: bash
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      if: github.event_name != 'pull_request'
       id: apply
       run: |
         terraform apply -auto-approve
