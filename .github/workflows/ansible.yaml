@@ -1,0 +1,65 @@
+name: 'CD Ansible'
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to checkout'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+    name: Ansible
+    environment: prd
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
+      - name: Sync to S3
+        run: |
+          aws s3 cp ./prd/ansible-nat-instance/mastodon.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/nat-instance/
+          aws s3 cp ./prd/ansible-nat-instance/files.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/nat-instance/
+        env:
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Run ansible for nat / reverse proxy instance
+        run: ./prd/ansible-nat-instance/ansible-run.sh
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Replace credentials
+        run: |
+          sed -i 's:$RAKE_SECRET:${{ secrets.RAKE_SECRET }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$AWS_ACCESS_KEY_ID:${{ secrets.AWS_ACCESS_KEY_ID }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$AWS_SECRET_ACCESS_KEY:${{ secrets.AWS_SECRET_ACCESS_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$AWS_SMTP_USERNAME:${{ secrets.AWS_SMTP_USERNAME }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$AWS_SMTP_KEY:${{ secrets.AWS_SMTP_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$NOTIFICATION_EMAIL:${{ secrets.NOTIFICATION_EMAIL }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY:${{ secrets.ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT:${{ secrets.ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT }}:g' ./prd/ansible-mastodon-instance/.env.production
+          sed -i 's:$ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY:${{ secrets.ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY }}:g' ./prd/ansible-mastodon-instance/.env.production
+      - name: Sync to S3
+        run: |
+          aws s3 cp ./prd/ansible-mastodon-instance/.env.production s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/
+          aws s3 cp ./prd/ansible-mastodon-instance/backup.sh s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/
+          aws s3 cp ./prd/ansible-mastodon-instance/mastodon.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/mastodon-instance/
+          aws s3 cp ./prd/ansible-mastodon-instance/files.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/mastodon-instance/
+        env:
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Run ansible for mastodon instance
+        run: ./prd/ansible-mastodon-instance/ansible-run.sh
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
