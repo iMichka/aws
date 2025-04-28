@@ -17,7 +17,7 @@ jobs:
     environment: prd
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
       - name: Sync to S3
