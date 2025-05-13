@@ -2,9 +2,6 @@ name: 'CD Ansible'
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to checkout'
 
 permissions:
   contents: read
@@ -16,10 +13,8 @@ jobs:
     name: Ansible
     environment: prd
     steps:
-      - name: Checkout repo
+      - name: Checkout repo, branch - ${{ github.ref_name }}
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.branch }}
       - name: Sync to S3
         run: |
           aws s3 cp ./prd/ansible-nat-instance/mastodon.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/nat-instance/
