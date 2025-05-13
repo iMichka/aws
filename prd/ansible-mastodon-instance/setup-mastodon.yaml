@@ -71,6 +71,9 @@
         state: present
         update_cache: yes
 
+    - name: Install yarn
+      shell: "npm install --global yarn"
+
     - name: Add mastodon user
       ansible.builtin.user:
         name: mastodon
@@ -193,6 +196,7 @@
 
     - name: Install more deps
       shell: cd /home/mastodon/live && yarn install --immutable
+      become_user: mastodon
 
     # https://blog.saeloun.com/2019/04/11/rails-6-rails-db-prepare/
     # TODO: Set SKIP_POST_DEPLOYMENT_MIGRATIONS=true for some updates
