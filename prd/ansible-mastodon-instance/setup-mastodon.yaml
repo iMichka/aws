@@ -71,9 +71,6 @@
         state: present
         update_cache: yes
 
-    - name: Install yarn
-      shell: "npm install --global yarn"
-
     - name: Add mastodon user
       ansible.builtin.user:
         name: mastodon
@@ -150,12 +147,6 @@
         version: v4.3.8
       become_user: mastodon
 
-    - name: Corepack
-      shell: |
-        cd /home/mastodon/live && corepack enable
-        cd /home/mastodon/live && corepack prepare
-      become_user: mastodon
-
     - name: Get config file from s3
       aws_s3:
         bucket: imichka-ansible
@@ -194,8 +185,12 @@
         cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.3.5/bin/bundle install -j$(getconf _NPROCESSORS_ONLN)
       become_user: mastodon
 
-    - name: Install more deps
-      shell: cd /home/mastodon/live && yarn install --immutable
+    - name: Install yarn deps
+      shell: |
+        mkdir /home/mastodon/bin
+        cd /home/mastodon/live && corepack enable --install-directory /home/mastodon/bin
+        cd /home/mastodon/live && corepack prepare
+        cd /home/mastodon/live && /home/mastodon/bin/yarn install --immutable
       become_user: mastodon
 
     # https://blog.saeloun.com/2019/04/11/rails-6-rails-db-prepare/
@@ -208,6 +203,7 @@
     - name: Install assets
       shell: |
         export NODE_OPTIONS="--max-old-space-size=2048"
+        export PATH=/home/mastodon/bin/:$PATH
         cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake assets:precompile
       become_user: mastodon
 
