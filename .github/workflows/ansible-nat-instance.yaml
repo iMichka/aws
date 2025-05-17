@@ -1,0 +1,32 @@
+name: 'CD Ansible Nat Instance'
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+    name: CD Ansible Nat Instance
+    environment: prd
+    steps:
+      - name: Checkout repo, branch - ${{ github.ref_name }}
+        uses: actions/checkout@v4
+      - name: Sync to S3
+        run: |
+          aws s3 cp ./prd/ansible-nat-instance/mastodon.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/nat-instance/
+          aws s3 cp ./prd/ansible-nat-instance/files.conf s3://${{ secrets.AWS_S3_ANSIBLE_BUCKET }}/env/nat-instance/
+        env:
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Run ansible for nat / reverse proxy instance
+        run: ./prd/ansible-nat-instance/ansible-run.sh
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
