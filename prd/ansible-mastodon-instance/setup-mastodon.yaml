@@ -193,3 +193,72 @@
         cd /home/mastodon/live && corepack prepare
         cd /home/mastodon/live && /home/mastodon/bin/yarn install --immutable
       become_user: mastodon
+
+    # https://blog.saeloun.com/2019/04/11/rails-6-rails-db-prepare/
+    # TODO: Set SKIP_POST_DEPLOYMENT_MIGRATIONS=true for some updates
+    - name: Setup database
+      shell: |
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
+      become_user: mastodon
+
+    - name: Install assets
+      shell: |
+        export NODE_OPTIONS="--max-old-space-size=2048"
+        export PATH=/home/mastodon/bin/:$PATH
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake assets:precompile
+      become_user: mastodon
+
+    - name: Get config file from s3
+      aws_s3:
+        bucket: imichka-ansible
+        object: env/mastodon-instance/mastodon.conf
+        dest: /etc/nginx/sites-available/mastodon.conf
+        mode: get
+
+    - name: Get config file from s3
+      aws_s3:
+        bucket: imichka-ansible
+        object: env/mastodon-instance/files.conf
+        dest: /etc/nginx/sites-available/files.conf
+        mode: get
+
+    - name: Link NGINX Reverse Proxy
+      file:
+        src: "/etc/nginx/sites-available/mastodon.conf"
+        dest: "/etc/nginx/sites-enabled/mastodon.conf"
+        state: link
+
+    - name: Link NGINX Reverse Proxy
+      file:
+        src: "/etc/nginx/sites-available/files.conf"
+        dest: "/etc/nginx/sites-enabled/files.conf"
+        state: link
+
+    - name: Make Sure NGINX Service Is Running
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+    - name: Copy systemd service
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /etc/systemd/system/
+      loop:
+        - "/home/mastodon/live/dist/mastodon-sidekiq.service"
+        - "/home/mastodon/live/dist/mastodon-streaming.service"
+        - "/home/mastodon/live/dist/mastodon-web.service"
+
+    - name: Force systemd to reread configs
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable mastodon services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: restarted
+        enabled: true
+      loop:
+        - "mastodon-web"
+        - "mastodon-sidekiq"
+        - "mastodon-streaming"
