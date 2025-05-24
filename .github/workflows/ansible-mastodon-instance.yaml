@@ -1,4 +1,4 @@
-name: 'CD Ansible Mastodon Instance'
+name: 'Apply Ansible Mastodon Instance'
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
 jobs:
   ansible:
     runs-on: ubuntu-latest
-    name: CD Ansible Mastodon Instance
+    name: Apply Ansible Mastodon Instance
     environment: prd
     steps:
       - name: Checkout repo, branch - ${{ github.ref_name }}
