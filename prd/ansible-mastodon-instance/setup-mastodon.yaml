@@ -68,6 +68,7 @@
           - acl
           - python3-psycopg2 # for community.postgresql.postgresql_user
           - python3-boto3 # For the aws_s3 step
+          - cron
         state: present
         update_cache: yes
 
