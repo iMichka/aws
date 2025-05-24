@@ -1,4 +1,4 @@
-resource "aws_route_table" "internet-to-public-mastodon-route-table" {
+resource "aws_route_table" "public-mastodon-route-table" {
   vpc_id = aws_vpc.main.id
   route {
     cidr_block = "0.0.0.0/0"
@@ -6,16 +6,16 @@ resource "aws_route_table" "internet-to-public-mastodon-route-table" {
   }
 
   tags = {
-    Name = "internet-to-public-mastodon-route-table"
+    Name = "public-mastodon-route-table"
   }
 }
 
 resource "aws_route_table_association" "public-mastodon-route-table-association" {
   subnet_id      = aws_subnet.public-mastodon.id
-  route_table_id = aws_route_table.internet-to-public-mastodon-route-table.id
+  route_table_id = aws_route_table.public-mastodon-route-table.id
 }
 
-resource "aws_route_table" "public-mastodon-to-private-mastodon-route-table" {
+resource "aws_route_table" "private-mastodon-route-table" {
   vpc_id = aws_vpc.main.id
   route {
     cidr_block           = "0.0.0.0/0"
@@ -23,12 +23,12 @@ resource "aws_route_table" "public-mastodon-to-private-mastodon-route-table" {
   }
 
   tags = {
-    Name = "public-mastodon-to-private-mastodon-route-table"
+    Name = "private-mastodon-route-table"
   }
 }
 
 resource "aws_route_table_association" "private-mastodon-route-table-association" {
   subnet_id      = aws_subnet.private-mastodon.id
-  route_table_id = aws_route_table.public-mastodon-to-private-mastodon-route-table.id
+  route_table_id = aws_route_table.private-mastodon-route-table.id
 }
 
