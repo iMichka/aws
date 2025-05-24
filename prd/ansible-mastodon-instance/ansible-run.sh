@@ -5,7 +5,7 @@ if [ -z "$GITHUB_SHA" ]; then
 fi
 echo "Github sha: $GITHUB_SHA"
 
-INSTANCE_ID=$(aws ec2 describe-instances --filters 'Name=tag:Name,Values=mastodon-instance' 'Name=instance-state-name,Values=running' --output text --query 'Reservations[*].Instances[*].InstanceId')
+INSTANCE_ID=$(aws ec2 describe-instances --filters 'Name=tag:Name,Values=mastodon-instance-debian-12' 'Name=instance-state-name,Values=running' --output text --query 'Reservations[*].Instances[*].InstanceId')
 
 COMMAND_ID=$( \
   aws ssm send-command --document-name "AWS-RunRemoteScript" \
