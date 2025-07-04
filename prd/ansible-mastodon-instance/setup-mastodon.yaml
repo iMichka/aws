@@ -145,7 +145,7 @@
       ansible.builtin.git:
         repo: "https://github.com/mastodon/mastodon.git"
         dest: "/home/mastodon/live"
-        version: v4.3.8
+        version: v4.3.9
       become_user: mastodon
 
     - name: Get config file from s3
