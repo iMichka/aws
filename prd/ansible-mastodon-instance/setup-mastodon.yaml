@@ -145,7 +145,7 @@
       ansible.builtin.git:
         repo: "https://github.com/mastodon/mastodon.git"
         dest: "/home/mastodon/live"
-        version: v4.3.9
+        version: v4.4.2
       become_user: mastodon
 
     - name: Get config file from s3
@@ -195,10 +195,9 @@
       become_user: mastodon
 
     # https://blog.saeloun.com/2019/04/11/rails-6-rails-db-prepare/
-    # TODO: Set SKIP_POST_DEPLOYMENT_MIGRATIONS=true for some updates
-    - name: Setup database
+    - name: Run the pre-deployment database migrations / setup
       shell: |
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
+        cd /home/mastodon/live && SKIP_POST_DEPLOYMENT_MIGRATIONS=true RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
       become_user: mastodon
 
     - name: Install assets
@@ -206,6 +205,11 @@
         export NODE_OPTIONS="--max-old-space-size=2048"
         export PATH=/home/mastodon/bin/:$PATH
         cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake assets:precompile
+      become_user: mastodon
+
+    - name: Run the post-deployment database migrations
+      shell: |
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
       become_user: mastodon
 
     - name: Get config file from s3
