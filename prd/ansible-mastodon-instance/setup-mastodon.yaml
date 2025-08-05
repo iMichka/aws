@@ -76,6 +76,21 @@
       ansible.builtin.user:
         name: mastodon
 
+    - name: Get mastodon
+      ansible.builtin.git:
+        repo: "https://github.com/mastodon/mastodon.git"
+        dest: "/home/mastodon/live"
+        version: v4.4.2
+      become_user: mastodon
+
+    - name: Read file on host
+      vars:
+        ruby_version: "{{ lookup('file','/home/mastodon/live/.ruby-version') }}"
+      tasks:
+      - name: Print .ruby-version file
+        ansible.builtin.debug:
+          msg: "Ruby version: {{ ruby_version }}"
+
     - name: Get rbenv
       ansible.builtin.git:
         repo: "https://github.com/rbenv/rbenv.git"
@@ -108,14 +123,14 @@
 
     - name: Install ruby
       shell: |
-        source ~/.bashrc && RUBY_CONFIGURE_OPTS=--with-jemalloc /home/mastodon/.rbenv/bin/rbenv install 3.3.5 --skip-existing
+        source ~/.bashrc && RUBY_CONFIGURE_OPTS=--with-jemalloc /home/mastodon/.rbenv/bin/rbenv install {{ ruby_version|quote }} --skip-existing
       become_user: mastodon
       args:
         executable: /bin/bash
 
     - name: Install bundler
       shell: |
-        source ~/.bashrc && /home/mastodon/.rbenv/bin/rbenv global 3.3.5 && /home/mastodon/.rbenv/versions/3.3.5/bin/gem install bundler --no-document
+        source ~/.bashrc && /home/mastodon/.rbenv/bin/rbenv global {{ ruby_version|quote }} && /home/mastodon/.rbenv/versions/{{ ruby_version|quote }}/bin/gem install bundler --no-document
       become_user: mastodon
       args:
         executable: /bin/bash
@@ -140,13 +155,6 @@
         objs: public
         role: mastodon
       become_user: postgres
-
-    - name: Get mastodon
-      ansible.builtin.git:
-        repo: "https://github.com/mastodon/mastodon.git"
-        dest: "/home/mastodon/live"
-        version: v4.4.2
-      become_user: mastodon
 
     - name: Get config file from s3
       aws_s3:
@@ -181,9 +189,9 @@
 
     - name: Install Mastodon ruby deps
       shell: |
-        cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.3.5/bin/bundle config deployment 'true'
-        cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.3.5/bin/bundle config without 'development test'
-        cd /home/mastodon/live && /home/mastodon/.rbenv/versions/3.3.5/bin/bundle install -j$(getconf _NPROCESSORS_ONLN)
+        cd /home/mastodon/live && /home/mastodon/.rbenv/versions/{{ ruby_version|quote }}/bin/bundle config deployment 'true'
+        cd /home/mastodon/live && /home/mastodon/.rbenv/versions/{{ ruby_version|quote }}/bin/bundle config without 'development test'
+        cd /home/mastodon/live && /home/mastodon/.rbenv/versions/{{ ruby_version|quote }}/bin/bundle install -j$(getconf _NPROCESSORS_ONLN)
       become_user: mastodon
 
     - name: Install yarn deps
@@ -197,19 +205,19 @@
     # https://blog.saeloun.com/2019/04/11/rails-6-rails-db-prepare/
     - name: Run the pre-deployment database migrations / setup
       shell: |
-        cd /home/mastodon/live && SKIP_POST_DEPLOYMENT_MIGRATIONS=true RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
+        cd /home/mastodon/live && SKIP_POST_DEPLOYMENT_MIGRATIONS=true RAILS_ENV=production /home/mastodon/.rbenv/versions/{{ ruby_version|quote }}/bin/bundle exec rake db:prepare
       become_user: mastodon
 
     - name: Install assets
       shell: |
         export NODE_OPTIONS="--max-old-space-size=2048"
         export PATH=/home/mastodon/bin/:$PATH
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake assets:precompile
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/{{ ruby_version|quote }}/bin/bundle exec rake assets:precompile
       become_user: mastodon
 
     - name: Run the post-deployment database migrations
       shell: |
-        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/3.3.5/bin/bundle exec rake db:prepare
+        cd /home/mastodon/live && RAILS_ENV=production /home/mastodon/.rbenv/versions/{{ ruby_version|quote }}/bin/bundle exec rake db:prepare
       become_user: mastodon
 
     - name: Get config file from s3
