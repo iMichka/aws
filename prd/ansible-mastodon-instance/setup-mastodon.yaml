@@ -81,6 +81,7 @@
         repo: "https://github.com/mastodon/mastodon.git"
         dest: "/home/mastodon/live"
         version: v4.4.2
+        force: true
       become_user: mastodon
 
     - name: Read ruby version
