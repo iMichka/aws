@@ -23,5 +23,5 @@ resource "aws_route53_record" "blog" {
   name    = "blog.imichka.me"
   type    = "CNAME"
   ttl     = 300
-  records = ["https://d102lsq202hk7a.cloudfront.net"]
+  records = ["d102lsq202hk7a.cloudfront.net"]
 }
