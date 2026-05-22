@@ -17,3 +17,11 @@ resource "aws_route53_record" "files" {
   ttl     = 300
   records = [aws_eip.mastodon-public-eip.public_ip]
 }
+
+resource "aws_route53_record" "blog" {
+  zone_id = aws_route53_zone.imichka.zone_id
+  name    = "blog.imichka.me"
+  type    = "CNAME"
+  ttl     = 300
+  records = ["https://d102lsq202hk7a.cloudfront.net"]
+}
