@@ -21,9 +21,9 @@
         url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
         state: present
 
-    - name: Add nodejs 20.x ppa for apt repo
+    - name: Add nodejs 22.x ppa for apt repo
       shell:
-        curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        curl -sL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 
     - name: Install packages
       ansible.builtin.apt:
